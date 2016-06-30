@@ -1,8 +1,9 @@
 var express = require( 'express' );
 var router = express.Router();
-var mongoose = require( 'mongoose' );
+var ObjectID = require('mongodb').ObjectID;
 // MongoDB用ファイルを指定
-var mongo = require( '../mongo' );
+var collection = require( '../mongo' );
+var COL = 'restapi';
 
 // For Cross Origin
 router.all( '/*', function ( req, res, next ) {
@@ -13,65 +14,38 @@ router.all( '/*', function ( req, res, next ) {
 
 // GET find
 router.get( '/', function ( req, res ) {
-    mongo.find( 'mean', {}, {},
-        function ( list ) {
-            res.send( list );
-        }
-    );
+  collection(COL).find().toArray(function(err, docs){
+    res.send(docs);
+  })
 } );
 
 // GET find :id
 router.get( '/:id', function ( req, res ) {
-    mongo.find( 'mean', {
-            _id: mongoose.Types.ObjectId( req.params.id )
-        }, {},
-        function ( list ) {
-            res.send( list );
-        }
-    );
+  collection(COL).findOne( { _id: new ObjectID( req.params.id ) }, {}, function(err, r){
+    res.send( r );
+  } );
 } );
+
 
 // POST insert data
 router.post( '/', function ( req, res ) {
-    mongo.insert( 'mean', {
-            name: req.body.name,
-            description: req.body.description,
-            evaluation: req.body.evaluation,
-            picture: req.body.picture
-        }, {},
-        function ( result ) {
-            res.send( result );
-        }
-    );
+  collection(COL).insertOne( req.body ).then(function(r) {
+    res.send( r );
+  });
 } );
 
 // PUT update data
 router.put( '/:id', function ( req, res ) {
-    mongo.update( 'mean', {
-            _id: mongoose.Types.ObjectId( req.params.id )
-        }, {
-            name: req.body.name,
-            description: req.body.description,
-            evaluation: req.body.evaluation,
-            picture: req.body.picture
-        }, {},
-        function ( result ) {
-            res.send( result );
-        }
-    );
+  collection(COL).findOneAndUpdate( { _id: new ObjectID( req.params.id ) }, req.body, {}, function(err, r){
+    res.send( r );
+  } );
 } );
 
 // DELETE remove data
 router.delete( '/:id', function ( req, res ) {
-    mongo.remove( 'mean', {
-            _id: mongoose.Types.ObjectId( req.params.id )
-        }, {
-            justOne: false
-        },
-        function ( result ) {
-            res.send( result );
-        }
-    );
+  collection(COL).findOneAndDelete( { _id: new ObjectID( req.params.id ) }, {}, function(err, r){
+    res.send( r );
+  } );
 } );
 
 module.exports = router;
